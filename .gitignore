@@ -1,0 +1,14 @@
+node_modules/
+dist/
+release/
+.vite/
+.agent/
+.playwright-mcp/
+.env
+.env.*
+!.env.example
+*.log
+.DS_Store
+index-*.js
+index-*.css
+build/candidates/
