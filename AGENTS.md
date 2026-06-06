@@ -11,6 +11,8 @@ Before implementation, read:
 3. `docs/RESEARCH.md`
 4. `docs/superpowers/plans/2026-05-25-longread-audio-mvp.md`
 
+If the task involves building, packaging, installing, or helping a user double-click the macOS app, also read `docs/PACKAGING_MAC.md`.
+
 ## Product Shape
 
 Longread Audio turns pasted text or public URLs into saved MP3 narration using affordable AI voices.
@@ -37,6 +39,7 @@ It is not Speakeasy. Do not fold dictation, hotkeys, paste automation, accounts,
 ## Packaged App Testing
 
 - The built macOS product is named `readme`.
+- For detailed packaging, install, verification, and troubleshooting steps, follow `docs/PACKAGING_MAC.md`.
 - After any user-facing app change, run `npm run package:mac` and replace `/Applications/readme.app` with `release/mac-arm64/readme.app` so the double-clickable app is current.
 - If the user wants to test by double-clicking the app, run `npm run package:mac` first so `release/mac-arm64/readme.app` is not stale.
 - For faster local testing without repackaging, run `npm run build` then `npm run dev:electron`.

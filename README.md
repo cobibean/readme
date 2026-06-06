@@ -124,6 +124,8 @@ On machines without Apple signing and notarization credentials, the app can stil
 
 The current package flow has been verified on Apple Silicon and produces an ARM macOS DMG.
 
+For a complete step-by-step packaging guide, including agent checklist and troubleshooting, see [Packaging readme for macOS](docs/PACKAGING_MAC.md).
+
 ## Architecture
 
 readme is an Electron app with a React renderer and a TypeScript main process.
@@ -173,6 +175,7 @@ The main process owns network calls, API keys, file writes, and audio assembly. 
 
 - [Product requirements](docs/PRD.md)
 - [Provider research](docs/RESEARCH.md)
+- [macOS packaging guide](docs/PACKAGING_MAC.md)
 - [Launch plan](docs/LAUNCH_PLAN.md)
 - [MVP implementation plan](docs/superpowers/plans/2026-05-25-longread-audio-mvp.md)
 
