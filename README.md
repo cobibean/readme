@@ -25,13 +25,16 @@
 
 Some writing is worth reading closely, but not always at a desk.
 
-readme is for the 60-page report, the sprawling blog post, the public-domain chapter, the long letter, the research memo, the sermon draft, the essay you meant to read all week. It turns that text into an audio file without turning the product into a podcast studio, dictation tool, hosted library, or subscription platform.
+readme was originally built for the kind of text that is too long to casually skim: a 60-page essay, a whole chapter of a book, a sprawling blog post, a long letter, a research memo, or a sermon draft. It turns that text into an audio file without turning the product into a podcast studio, dictation tool, hosted library, or subscription platform.
+
+It is also useful for modern AI work. Copy a long Claude Code, Codex, or agent output into readme and turn it into something you can listen to while walking, cleaning, commuting, or multitasking away from the screen.
 
 The goal is simple: bring your own API key, see the estimated cost before generation, create a listenable MP3, and keep the workflow local-first.
 
 ## Highlights
 
 - **Long-form first**: built for essays, articles, letters, whitepapers, and book-length passages.
+- **Agent-output friendly**: listen back to long Claude Code, Codex, and agent responses when reading another wall of text is not the move.
 - **Cost-aware generation**: estimates characters, listening time, chunk count, and provider cost before paid calls.
 - **Default job cap**: keeps the per-job cost cap at `$10` unless you raise it.
 - **Voice preview**: generates a short sample before you commit to a full export.
