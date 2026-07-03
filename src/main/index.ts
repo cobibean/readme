@@ -28,6 +28,8 @@ const createWindow = (): BrowserWindow => {
     minWidth: 960,
     minHeight: 660,
     title: 'readme',
+    titleBarStyle: 'hiddenInset',
+    trafficLightPosition: { x: 16, y: 14 },
     ...(iconPath ? { icon: iconPath } : {}),
     webPreferences: {
       preload: preloadPath(),

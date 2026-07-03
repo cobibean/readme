@@ -126,6 +126,7 @@ const MainApp = (): ReactElement => {
   const [openAiKeySource, setOpenAiKeySource] = useState<OpenAiKeySource>('missing');
   const [apiKeyInput, setApiKeyInput] = useState('');
   const [lastManifestPath, setLastManifestPath] = useState('');
+  const [showKeyPanel, setShowKeyPanel] = useState(false);
 
   const selectedVoice = useMemo(() => getVoiceOption(selectedVoiceId), [selectedVoiceId]);
 
@@ -395,30 +396,50 @@ const MainApp = (): ReactElement => {
     }
   };
 
+  const keyPanel = (
+    <div className="key-panel">
+      <div className="api-key-row">
+        <input
+          aria-label="OpenAI API key"
+          type="password"
+          value={apiKeyInput}
+          onChange={(event) => setApiKeyInput(event.target.value)}
+          placeholder="Paste key to save in Keychain"
+          autoComplete="off"
+        />
+        <button type="button" onClick={saveOpenAiApiKey} disabled={!apiKeyInput.trim()}>
+          Save
+        </button>
+      </div>
+      <div className="button-row settings-actions">
+        <button type="button" onClick={clearOpenAiApiKey}>
+          Clear Saved Key
+        </button>
+        <button type="button" onClick={validateOpenAiSavedKey} disabled={!hasOpenAiApiKey}>
+          Check Key
+        </button>
+        <span className={hasOpenAiApiKey ? 'status-text ok' : 'status-text'}>
+          {hasOpenAiApiKey ? keySourceLabels[openAiKeySource] : 'Missing'}
+        </span>
+      </div>
+      {settingsMessage && <p className="muted">{settingsMessage}</p>}
+    </div>
+  );
+
   return (
     <main className="app-shell">
       <section className="document-pane">
-        <header className="topbar">
-          <div className="brand-lockup">
-            <div className="brand-mark" aria-hidden="true">r</div>
-            <div>
-              <p className="eyebrow">readme</p>
-              <h1>make the page talk.</h1>
-            </div>
-          </div>
-          <div className={hasOpenAiApiKey ? 'key-pill ok' : 'key-pill'}>
-            {hasOpenAiApiKey ? `OpenAI key ready: ${keySourceLabels[openAiKeySource]}` : 'OpenAI key missing'}
+        <header className="toolbar">
+          <p className="wordmark">readme</p>
+          <div className="segmented" role="tablist" aria-label="Source mode">
+            <button className={sourceMode === 'text' ? 'active' : ''} type="button" onClick={() => setSourceMode('text')}>
+              Paste Text
+            </button>
+            <button className={sourceMode === 'url' ? 'active' : ''} type="button" onClick={() => setSourceMode('url')}>
+              From URL
+            </button>
           </div>
         </header>
-
-        <div className="segmented" role="tablist" aria-label="Source mode">
-          <button className={sourceMode === 'text' ? 'active' : ''} type="button" onClick={() => setSourceMode('text')}>
-            Paste Text
-          </button>
-          <button className={sourceMode === 'url' ? 'active' : ''} type="button" onClick={() => setSourceMode('url')}>
-            From URL
-          </button>
-        </div>
 
         {sourceMode === 'url' && (
           <div className="url-row">
@@ -443,63 +464,20 @@ const MainApp = (): ReactElement => {
 
         {sourceDocument && (
           <div className="doc-meta">
-            <strong>{sourceDocument.title}</strong>
-            <span>{sourceDocument.characterCount.toLocaleString()} chars</span>
-            <span>{sourceDocument.wordCount.toLocaleString()} words</span>
-            {sourceDocument.sourceUrl && <span>{new URL(sourceDocument.sourceUrl).host}</span>}
+            {sourceDocument.title} · {sourceDocument.wordCount.toLocaleString()} words
+            {estimate && ` · ~${formatDuration(estimate.estimatedListeningSeconds)} listen`}
+            {sourceDocument.sourceUrl && ` · ${new URL(sourceDocument.sourceUrl).host}`}
           </div>
         )}
       </section>
 
       <aside className="control-pane">
-        <section>
-          <h2>Estimate</h2>
-          {estimate ? (
-            <div className="estimate-grid">
-              <div><span>Cost</span><strong>{formatMoney(estimate.estimatedCostUsd)}</strong></div>
-              <div><span>Cap</span><strong>{formatMoney(costCapUsd)}</strong></div>
-              <div><span>Duration</span><strong>{formatDuration(estimate.estimatedListeningSeconds)}</strong></div>
-            </div>
-          ) : (
-            <p className="muted">Paste text or extract a public URL to estimate the job.</p>
-          )}
-          {estimate && <p className="pricing-note">{estimate.pricingNote}</p>}
-          {estimate?.capExceeded && <p className="warning">Estimate exceeds the current cap.</p>}
-        </section>
+        {!hasOpenAiApiKey && keyPanel}
 
-        <section className="api-key-box">
-          <h2>OpenAI key</h2>
-          <div className="api-key-row">
-            <input
-              aria-label="OpenAI API key"
-              type="password"
-              value={apiKeyInput}
-              onChange={(event) => setApiKeyInput(event.target.value)}
-              placeholder="Paste key to save in Keychain"
-              autoComplete="off"
-            />
-            <button type="button" onClick={saveOpenAiApiKey} disabled={!apiKeyInput.trim()}>
-              Save
-            </button>
-          </div>
-          <div className="button-row settings-actions">
-            <button type="button" onClick={clearOpenAiApiKey}>
-              Clear Saved Key
-            </button>
-            <button type="button" onClick={validateOpenAiSavedKey} disabled={!hasOpenAiApiKey}>
-              Check Key
-            </button>
-            <span className={hasOpenAiApiKey ? 'status-text ok' : 'status-text'}>
-              {hasOpenAiApiKey ? keySourceLabels[openAiKeySource] : 'Missing'}
-            </span>
-          </div>
-          {settingsMessage && <p className="muted">{settingsMessage}</p>}
-        </section>
-
-        <section className="controls">
-          <label>
-            Voice
-            <select value={selectedVoiceId} onChange={(event) => setSelectedVoiceId(event.target.value)}>
+        <div className="rail-section">
+          <label className="rail-label" htmlFor="voice-select">Voice</label>
+          <div className="voice-row">
+            <select id="voice-select" value={selectedVoiceId} onChange={(event) => setSelectedVoiceId(event.target.value)}>
               {openAiVoiceGroups.map((group) => (
                 <optgroup key={group.label} label={group.label}>
                   {group.voices.map((voice) => (
@@ -508,94 +486,126 @@ const MainApp = (): ReactElement => {
                 </optgroup>
               ))}
             </select>
-          </label>
-
-          <label>
-            Tone
-            <select
-              value={tone}
-              onChange={(event) => {
-                setTone(event.target.value as TonePreset);
-                setSample(null);
-                setGeneratedAudio(null);
-                setSavedOutputPath('');
-                setLastManifestPath('');
-                setProgress(null);
-              }}
+            <button
+              className="icon-button"
+              type="button"
+              aria-label="Preview voice"
+              onClick={generateSample}
+              disabled={!sourceDocument || !estimate || estimate.capExceeded || !canUseOpenAi || isBusy}
             >
-              {TONE_OPTIONS.map((option) => (
-                <option key={option.id} value={option.id}>{option.label}</option>
-              ))}
-            </select>
-          </label>
-
-          <label>
-            Cost cap
-            <input
-              type="number"
-              min="0"
-              step="0.25"
-              value={costCapUsd}
-              onChange={(event) => setCostCapUsd(Number(event.target.value))}
-            />
-          </label>
-
-        </section>
-
-        <section className="voice-preview-box">
-          <div className="button-row">
-            <button type="button" onClick={generateSample} disabled={!sourceDocument || !estimate || estimate.capExceeded || !canUseOpenAi || isBusy}>
-              Preview Voice
+              ▶
             </button>
           </div>
-          {sample && <audio controls src={sample.sampleUrl} />}
-        </section>
+          {sample && <audio className="voice-preview-audio" controls src={sample.sampleUrl} />}
+        </div>
 
-        <section className="actions">
-          <button className="primary" type="button" onClick={generateMp3} disabled={!canGenerate}>
-            Generate Audio
-          </button>
-          <button type="button" onClick={cancelJob} disabled={!isBusy || !progress?.jobId}>
-            Cancel
-          </button>
-          <button type="button" onClick={resumeJob} disabled={!canResume}>
-            Resume
-          </button>
-        </section>
+        <div className="rail-section">
+          <label className="rail-label" htmlFor="tone-select">Tone</label>
+          <select
+            id="tone-select"
+            value={tone}
+            onChange={(event) => {
+              setTone(event.target.value as TonePreset);
+              setSample(null);
+              setGeneratedAudio(null);
+              setSavedOutputPath('');
+              setLastManifestPath('');
+              setProgress(null);
+            }}
+          >
+            {TONE_OPTIONS.map((option) => (
+              <option key={option.id} value={option.id}>{option.label}</option>
+            ))}
+          </select>
+        </div>
 
-        {generatedAudio && (
-          <section className="generated-audio-box">
-            <audio controls autoPlay src={generatedAudio.audioUrl} />
-            <div className="button-row">
-              <button type="button" onClick={saveGeneratedAudio}>
-                Save MP3
-              </button>
-              <button type="button" onClick={() => window.longread?.openOutputFile(savedOutputPath || generatedAudio.outputPath)}>
-                Open Audio
-              </button>
-              <button type="button" onClick={() => window.longread?.revealOutput(savedOutputPath || generatedAudio.outputPath)}>
-                Show File
-              </button>
+        <div className="rail-section">
+          <label className="rail-label" htmlFor="cost-cap-input">Cost cap</label>
+          <input
+            id="cost-cap-input"
+            type="number"
+            min="0"
+            step="0.25"
+            value={costCapUsd}
+            onChange={(event) => setCostCapUsd(Number(event.target.value))}
+          />
+        </div>
+
+        <hr className="rail-divider" />
+
+        <div className="estimate-block">
+          <p className="rail-label">Estimated cost</p>
+          {estimate ? (
+            <>
+              <p className="estimate-cost">{formatMoney(estimate.estimatedCostUsd)}</p>
+              <p className={estimate.capExceeded ? 'estimate-sub danger' : 'estimate-sub'}>
+                ~{formatDuration(estimate.estimatedListeningSeconds)} · {estimate.chunkCount} {estimate.chunkCount === 1 ? 'chunk' : 'chunks'} · {estimate.capExceeded ? 'over cap' : 'under cap'}
+              </p>
+              <p className="estimate-note">{estimate.pricingNote}</p>
+              {estimate.capExceeded && <p className="estimate-warning">Raise the cost cap or shorten the text.</p>}
+            </>
+          ) : (
+            <p className="estimate-empty">Paste text or extract a public URL to estimate the job.</p>
+          )}
+        </div>
+
+        <div className="action-slot">
+          {generatedAudio ? (
+            <div className="result-card">
+              <audio controls autoPlay src={generatedAudio.audioUrl} />
+              <div className="button-row">
+                <button type="button" onClick={saveGeneratedAudio}>
+                  Save MP3
+                </button>
+                <button type="button" onClick={() => window.longread?.openOutputFile(savedOutputPath || generatedAudio.outputPath)}>
+                  Open Audio
+                </button>
+                <button type="button" onClick={() => window.longread?.revealOutput(savedOutputPath || generatedAudio.outputPath)}>
+                  Show File
+                </button>
+              </div>
             </div>
-          </section>
-        )}
-
-        <section className="progress-box">
-          <div className="progress-track">
-            <div style={{ width: `${progressPercent}%` }} />
-          </div>
-          <p>{message || 'Ready'}</p>
-          {progress && (
-            <p className="muted">
-              {progress.generatedCharacters.toLocaleString()} generated chars
-            </p>
+          ) : isBusy ? (
+            <>
+              <div className="progress-track">
+                <div style={{ width: `${progressPercent}%` }} />
+              </div>
+              {progress && (
+                <p className="progress-status">
+                  {message} · {progress.generatedCharacters.toLocaleString()} generated chars
+                </p>
+              )}
+              <button type="button" onClick={cancelJob} disabled={!progress?.jobId}>
+                Cancel
+              </button>
+            </>
+          ) : (
+            <>
+              <button className="primary" type="button" onClick={generateMp3} disabled={!canGenerate}>
+                Generate Audio
+              </button>
+              {canResume && (
+                <button type="button" onClick={resumeJob}>
+                  Resume
+                </button>
+              )}
+              {message && message !== 'Ready' && <p className="muted">{message}</p>}
+            </>
           )}
-          {progress?.status === 'complete' && (
-            <button type="button" onClick={() => window.longread?.revealOutput(progress.outputPath)}>
-              Open Folder
+        </div>
+
+        <div className="key-line">
+          <span className={hasOpenAiApiKey ? 'key-dot ok' : 'key-dot'} aria-hidden="true" />
+          <button className="key-line-label" type="button" onClick={() => setShowKeyPanel((current) => !current)}>
+            {hasOpenAiApiKey ? `OpenAI key · ${keySourceLabels[openAiKeySource]}` : 'OpenAI key missing'}
+          </button>
+          {hasOpenAiApiKey && (
+            <button className="key-gear" type="button" aria-label="OpenAI key settings" onClick={() => setShowKeyPanel((current) => !current)}>
+              ⚙
             </button>
           )}
-        </section>
+        </div>
+        {hasOpenAiApiKey && showKeyPanel && keyPanel}
       </aside>
     </main>
   );
