@@ -5,51 +5,56 @@
 </p>
 
 <p align="center">
-  <strong>Turn long reads into private MP3 narration on your Mac.</strong>
+  <strong>Turn long reads into audio you can take with you.</strong>
 </p>
 
 <p align="center">
-  Paste an essay, article, letter, whitepaper, sermon, or public URL. readme estimates the cost, previews the voice, generates narration with AI text-to-speech, and saves a normal MP3 you can play anywhere.
+  Paste text or a public URL, see the estimated cost, and generate an MP3 to listen to away from your screen.
 </p>
 
 <p align="center">
-  <a href="https://github.com/cobibean/readme/stargazers"><img alt="GitHub stars" src="https://img.shields.io/github/stars/cobibean/readme?style=flat-square"></a>
   <a href="https://github.com/cobibean/readme/blob/main/LICENSE"><img alt="License: MIT" src="https://img.shields.io/badge/license-MIT-blue?style=flat-square"></a>
   <img alt="macOS" src="https://img.shields.io/badge/platform-macOS-black?style=flat-square">
-  <img alt="Node.js" src="https://img.shields.io/badge/node-%3E%3D20%20%3C22-339933?style=flat-square">
 </p>
 
-![readme playback screen](longread-audio-playback-first.png)
+**readme** is a macOS app for people who want to listen to essays, articles, research, or long AI responses while walking, commuting, or doing something else. Bring your own OpenAI API key; source text is sent to OpenAI for narration, and generated audio and job files stay on your Mac. There is no readme account or hosted library.
 
-## Why readme exists
+Product direction, interface design, and engineering by [Jacobi Lange](https://github.com/cobibean), with AI-assisted development.
 
-Some writing is worth reading closely, but not always at a desk.
+![readme interface with illustrative text and playback data, a cost estimate, and the New narration button](docs/images/readme-narration.png)
 
-readme was originally built for the kind of text that is too long to casually skim: a 60-page essay, a whole chapter of a book, a sprawling blog post, a long letter, a research memo, or a sermon draft. It turns that text into an audio file without turning the product into a podcast studio, dictation tool, hosted library, or subscription platform.
+*Current interface with illustrative sample content and playback data.*
 
-It is also useful for modern AI work. Copy a long Claude Code, Codex, or agent output into readme and turn it into something you can listen to while walking, cleaning, commuting, or multitasking away from the screen.
+## The product decisions
 
-The goal is simple: bring your own API key, see the estimated cost before generation, create a listenable MP3, and keep the workflow local-first.
+The core job is simple: turn something worth reading into something worth listening to. The design focuses on the decisions and failure points around that job.
 
-## Highlights
+| Decision | Why it matters |
+| --- | --- |
+| **Show cost before generation** | Readers can check the estimate before spending. A default **$10 per-job cap** blocks jobs estimated above it until the reader raises the cap or shortens the text. Estimates may differ from the provider's final bill. |
+| **Make voice preview optional** | A short sample helps the reader choose a voice before generating the full document. Once they know what they like, they can go straight to generation. |
+| **Play first, save when wanted** | Completed narration plays inside the app. Exporting a standard MP3 is a separate choice, so listening does not require managing files first. |
+| **Keep files local and skip accounts** | There is no readme signup, cloud library, or sync setup between the reader and their audio. The tradeoff is bringing an API key and handling files across devices yourself. |
+| **Preserve completed work** | Cancelled or failed jobs can resume using completed audio chunks. A temporary failure should not mean regenerating an entire long document. |
 
-- **Long-form first**: built for essays, articles, letters, whitepapers, and book-length passages.
-- **Agent-output friendly**: listen back to long Claude Code, Codex, and agent responses when reading another wall of text is not the move.
-- **Cost-aware generation**: estimates characters, listening time, chunk count, and provider cost before paid calls.
-- **Default job cap**: keeps the per-job cost cap at `$10` unless you raise it.
-- **Voice preview**: generates a short sample before you commit to a full export.
-- **URL extraction**: fetches public pages and extracts readable article text with Mozilla Readability.
-- **Resumable jobs**: writes chunk audio and manifests so interrupted jobs can continue without starting over.
-- **MP3 output**: stitches generated chunks into a normal MP3 for Finder, QuickTime, Music, and other players.
-- **Local-first app shape**: no accounts, no hosted history, no sync service, no remote telemetry.
-- **Keychain storage**: saves OpenAI API keys to the macOS Keychain where possible.
-- **Provider adapter foundation**: starts with OpenAI TTS and keeps the architecture open for more providers.
+## An iteration from using it
 
-## What it is not
+After finishing a narration, I wanted a clean place to start the next one. The app had a path from text to audio, but no clear action to begin again.
 
-readme is intentionally narrow.
+That led to **New narration** in the top bar. It stops playback and clears the current text, URL, audio player, and job status while preserving the voice, tone, cost cap, and saved MP3s. It is unavailable while generation or saving is in progress.
 
-It is not a dictation app. It is not Speakeasy. It is not an ElevenLabs wrapper. It is not a podcast editor. It does not bypass paywalls, rewrite the source text, upload your library to a server, or ask you to create an account.
+The lesson was to design the return to the next task as deliberately as the first successful result.
+
+## Try it
+
+The current app supports pasted text, public URL extraction, OpenAI voices and tone presets, cost estimates, voice previews, playback, MP3 export, and resuming a cancelled or failed job. The documented macOS packaging path targets Apple Silicon.
+
+1. Add an OpenAI API key in the app's settings. It is stored in the macOS Keychain.
+2. Paste text, or choose **From URL** to extract a public article.
+3. Review the estimated cost, choose a voice and tone, and optionally preview the voice.
+4. Select **Generate Audio**, listen in the app, and use **Save MP3** if you want an exported copy.
+
+Build from source with the instructions below. For a double-clickable local app and release signing requirements, see the [macOS packaging guide](docs/PACKAGING_MAC.md).
 
 ## Quick start
 
@@ -103,15 +108,7 @@ release/mac-arm64/readme.app
 
 ## API keys
 
-For normal app use, paste your OpenAI API key into readme's settings panel. The app stores it in the macOS Keychain.
-
-For development, you can also use:
-
-```bash
-OPENAI_API_KEY=sk-...
-```
-
-or a local `.env` file:
+For development, you can also set `OPENAI_API_KEY` in your shell environment or a local `.env` file:
 
 ```bash
 OPENAI_API_KEY=sk-...
@@ -119,19 +116,9 @@ OPENAI_API_KEY=sk-...
 
 `.env` files are ignored by git. Never commit API keys.
 
-## Packaging notes
-
-`npm run package:mac` builds the TypeScript main process, Vite renderer, native Keychain helper, Electron app bundle, and DMG.
-
-On machines without Apple signing and notarization credentials, the app can still be packaged for local testing, but it will not be notarized for broad public distribution. A production release should be signed and notarized with an Apple Developer account.
-
-The current package flow has been verified on Apple Silicon and produces an ARM macOS DMG.
-
-For a complete step-by-step packaging guide, including agent checklist and troubleshooting, see [Packaging readme for macOS](docs/PACKAGING_MAC.md).
-
 ## Architecture
 
-readme is an Electron app with a React renderer and a TypeScript main process.
+readme uses Electron, React, and TypeScript. The main process owns network calls, API keys, file writes, and audio assembly; the renderer owns the interface and receives progress updates through IPC.
 
 ```text
 src/
@@ -139,7 +126,6 @@ src/
     extraction/       Public URL fetching and Readability parsing
     jobs/             Chunk generation, progress, manifests, resume flow
     providers/        TTS provider adapters
-    quick-read/       macOS quick-read experiments and floating controls
     audio/            ffmpeg stitching
     keychain.ts       macOS Keychain integration
   renderer/
@@ -152,7 +138,7 @@ src/
     types.ts          Shared IPC and job types
 ```
 
-The main process owns network calls, API keys, file writes, and audio assembly. The renderer owns the interactive workflow and receives progress updates through IPC.
+Public URL extraction uses Mozilla Readability. Narration runs in chunks with local manifests for recovery, then ffmpeg assembles the MP3. A provider interface keeps synthesis separate from the job runner; OpenAI is the implemented provider for live narration today.
 
 ## Development scripts
 
@@ -164,23 +150,14 @@ The main process owns network calls, API keys, file writes, and audio assembly. 
 | `npm test` | Runs the Vitest suite |
 | `npm run package:mac` | Builds and packages a macOS DMG |
 
-## Roadmap
-
-- AWS Polly adapter for reliable, predictable MP3 generation.
-- Google Cloud voice adapter after quality and setup testing.
-- Better provider comparison inside the app.
-- Chapterized output for long documents.
-- PDF import.
-- More robust resume diagnostics.
-- Public release signing and notarization.
-
 ## Project docs
 
-- [Product requirements](docs/PRD.md)
-- [Provider research](docs/RESEARCH.md)
+- [Product requirements and original scope](docs/PRD.md)
+- [Provider research](docs/RESEARCH.md) — dated research; verify current pricing before relying on it
 - [macOS packaging guide](docs/PACKAGING_MAC.md)
-- [Launch plan](docs/LAUNCH_PLAN.md)
-- [MVP implementation plan](docs/superpowers/plans/2026-05-25-longread-audio-mvp.md)
+- [Original MVP implementation plan](docs/superpowers/plans/2026-05-25-longread-audio-mvp.md)
+
+Planning documents include ideas beyond the current app. The feature summary above describes what is implemented.
 
 ## Contributing
 
@@ -193,18 +170,11 @@ Before opening a large PR, please start with an issue so the direction can be di
 ## Security and privacy
 
 - Do not commit API keys, provider credentials, generated audio, or local job artifacts.
-- Keep `.env`, `dist/`, `release/`, and `node_modules/` out of git.
-- Source text is sent to the selected TTS provider during generation.
-- The app does not include remote telemetry in v1.
+- The app does not include remote telemetry.
+- URL extraction fetches public pages; it does not bypass paywalls or authentication.
 - Users are responsible for having the rights to synthesize and save source material.
 
 If you find a security issue, please open a private report through GitHub Security Advisories if available, or contact the maintainer directly.
-
-## Maintainer
-
-Built by [@cobi_bean](https://twitter.com/cobi_bean).
-
-If readme is useful or interesting, a star helps more people find it.
 
 ## License
 
