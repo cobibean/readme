@@ -196,8 +196,12 @@ textarea:focus-visible {
   text-transform: lowercase;
 }
 
-.segmented {
+.new-narration {
   margin-left: auto;
+  min-height: 30px;
+}
+
+.segmented {
   width: fit-content;
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -508,6 +512,8 @@ textarea:focus-visible {
 
   .toolbar {
     padding-left: 88px;
+    height: auto;
+    flex-wrap: wrap;
   }
 
   .segmented,

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import type { ReactElement } from 'react';
 import {
   DEFAULT_COST_CAP_USD,
@@ -127,6 +127,10 @@ const MainApp = (): ReactElement => {
   const [apiKeyInput, setApiKeyInput] = useState('');
   const [lastManifestPath, setLastManifestPath] = useState('');
   const [showKeyPanel, setShowKeyPanel] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const sourceTextRef = useRef<HTMLTextAreaElement>(null);
+  const sampleAudioRef = useRef<HTMLAudioElement>(null);
+  const narrationAudioRef = useRef<HTMLAudioElement>(null);
 
   const selectedVoice = useMemo(() => getVoiceOption(selectedVoiceId), [selectedVoiceId]);
 
@@ -147,9 +151,6 @@ const MainApp = (): ReactElement => {
       setProgress(nextProgress);
       setLastManifestPath(nextProgress.manifestPath);
       setMessage(nextProgress.currentMessage);
-      if (nextProgress.status === 'complete' || nextProgress.status === 'failed' || nextProgress.status === 'cancelled') {
-        setIsBusy(false);
-      }
     });
 
     return () => {
@@ -206,6 +207,23 @@ const MainApp = (): ReactElement => {
     !isBusy &&
     (progress?.status === 'failed' || progress?.status === 'cancelled')
   );
+
+  const newNarration = (): void => {
+    if (isBusy || isSaving) return;
+    sampleAudioRef.current?.pause();
+    narrationAudioRef.current?.pause();
+    setSourceMode('text');
+    setSourceText('');
+    setSourceUrl('');
+    setSourceDocument(null);
+    setSample(null);
+    setGeneratedAudio(null);
+    setSavedOutputPath('');
+    setProgress(null);
+    setLastManifestPath('');
+    setMessage('');
+    sourceTextRef.current?.focus();
+  };
 
   const extractUrl = async (): Promise<void> => {
     if (!sourceUrl.trim() || !window.longread) {
@@ -294,6 +312,8 @@ const MainApp = (): ReactElement => {
     } catch (error) {
       setIsBusy(false);
       setMessage(displayError(error, 'Generation failed'));
+    } finally {
+      setIsBusy(false);
     }
   };
 
@@ -320,6 +340,8 @@ const MainApp = (): ReactElement => {
     } catch (error) {
       setIsBusy(false);
       setMessage(displayError(error, 'Resume failed'));
+    } finally {
+      setIsBusy(false);
     }
   };
 
@@ -328,6 +350,7 @@ const MainApp = (): ReactElement => {
       return;
     }
 
+    setIsSaving(true);
     setMessage('Saving MP3');
     try {
       const savedPath = await window.longread.saveAudioCopy(
@@ -342,6 +365,8 @@ const MainApp = (): ReactElement => {
       }
     } catch (error) {
       setMessage(displayError(error, 'Could not save MP3'));
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -431,6 +456,15 @@ const MainApp = (): ReactElement => {
       <section className="document-pane">
         <header className="toolbar">
           <p className="wordmark">readme</p>
+          <button
+            className="new-narration"
+            type="button"
+            onClick={newNarration}
+            disabled={isBusy || isSaving}
+            title={isBusy || isSaving ? 'Wait for the current operation to finish' : 'Clear the current text and audio'}
+          >
+            <span aria-hidden="true">+ </span>New narration
+          </button>
           <div className="segmented" role="tablist" aria-label="Source mode">
             <button className={sourceMode === 'text' ? 'active' : ''} type="button" onClick={() => setSourceMode('text')}>
               Paste Text
@@ -456,6 +490,7 @@ const MainApp = (): ReactElement => {
         )}
 
         <textarea
+          ref={sourceTextRef}
           aria-label="Source text"
           value={sourceText}
           onChange={(event) => setSourceText(event.target.value)}
@@ -496,7 +531,7 @@ const MainApp = (): ReactElement => {
               ▶
             </button>
           </div>
-          {sample && <audio className="voice-preview-audio" controls src={sample.sampleUrl} />}
+          {sample && <audio ref={sampleAudioRef} className="voice-preview-audio" controls src={sample.sampleUrl} />}
         </div>
 
         <div className="rail-section">
@@ -552,9 +587,9 @@ const MainApp = (): ReactElement => {
         <div className="action-slot">
           {generatedAudio ? (
             <div className="result-card">
-              <audio controls autoPlay src={generatedAudio.audioUrl} />
+              <audio ref={narrationAudioRef} controls autoPlay src={generatedAudio.audioUrl} />
               <div className="button-row">
-                <button type="button" onClick={saveGeneratedAudio}>
+                <button type="button" onClick={saveGeneratedAudio} disabled={isSaving}>
                   Save MP3
                 </button>
                 <button type="button" onClick={() => window.longread?.openOutputFile(savedOutputPath || generatedAudio.outputPath)}>
